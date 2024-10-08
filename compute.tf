@@ -51,7 +51,7 @@ resource "google_compute_instance_template" "redpanda_broker" {
 }
 
 resource "google_compute_instance_from_template" "redpanda_broker" {
-  count = var.node_count
+  count = var.broker_count
   name  = "rp-broker-${count.index}"
   zone = var.zone
   source_instance_template = google_compute_instance_template.redpanda_broker.name
@@ -69,7 +69,7 @@ resource "google_compute_instance_from_template" "redpanda_broker" {
 }
 
 resource "google_compute_address" "static" {
-  count      = var.node_count
+  count      = var.broker_count
   name       = "redpanda-static-ip-${count.index + 1}"
   address_type = "INTERNAL"
   subnetwork = google_compute_subnetwork.default.name

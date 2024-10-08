@@ -8,6 +8,6 @@ variable "zone" {
   default = "europe-west1-b"
 }
 
-variable "node_count" {
+variable "broker_count" {
   default = 3
 }
