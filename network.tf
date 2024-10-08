@@ -1,16 +1,16 @@
 resource "google_compute_network" "default" {
-  name = "main-network"
+  name = "${var.prefix}-main-network"
 }
 
 resource "google_compute_subnetwork" "default" {
-  name          = "cluster-subnet"
+  name          = "${var.prefix}-cluster-subnet"
   ip_cidr_range = "10.0.0.0/24"
   region        = var.region
   network       = google_compute_network.default.id
 }
 
 resource "google_compute_firewall" "default" {
-  name    = "redpanda-firewall"
+  name    = "${var.prefix}-redpanda-firewall"
   network = google_compute_network.default.name
 
   allow {
@@ -21,7 +21,7 @@ resource "google_compute_firewall" "default" {
 }
 
 resource "google_compute_firewall" "allow_ssh" {
-  name    = "allow-ssh"
+  name    = "${var.prefix}-allow-ssh"
   network = google_compute_network.default.name
 
   direction = "INGRESS"
@@ -35,7 +35,7 @@ resource "google_compute_firewall" "allow_ssh" {
 }
 
 resource "google_compute_firewall" "http" {
-  name    = "main-network-allow-http"
+  name    = "${var.prefix}-main-network-allow-http"
   network = google_compute_network.default.name
 
   direction = "INGRESS"
@@ -48,13 +48,13 @@ resource "google_compute_firewall" "http" {
 }
 
 resource "google_compute_router" "nat_router" {
-  name    = "redpanda-nat-router"
+  name    = "${var.prefix}-redpanda-nat-router"
   region  = var.region
   network = google_compute_network.default.id
 }
 
 resource "google_compute_router_nat" "nat_config" {
-  name                              = "redpanda-nat-config"
+  name                              = "${var.prefix}-redpanda-nat-config"
   router                            = google_compute_router.nat_router.name
   region                            = var.region
   nat_ip_allocate_option            = "AUTO_ONLY"

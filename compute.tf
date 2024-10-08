@@ -1,13 +1,13 @@
 resource "google_service_account" "default" {
-  account_id   = "redpanda-cluster"
-  display_name = "Redpanda Cluster"
+  account_id   = "${var.prefix}-redpanda-cluster"
+  display_name = "${var.prefix} Redpanda Cluster"
 }
 
 resource "google_compute_instance_template" "redpanda_broker" {
-  name        = "redpanda-broker-template"
-  description = "Redpanda broker template"
+  name        = "${var.prefix}-redpanda-broker-template"
+  description = "${var.prefix} Redpanda broker template"
 
-  instance_description = "Redpanda broker instance"
+  instance_description = "Redpanda broker instance for ${var.prefix}"
   machine_type         = "n1-standard-1"
   can_ip_forward       = false
 
@@ -52,7 +52,7 @@ resource "google_compute_instance_template" "redpanda_broker" {
 
 resource "google_compute_instance_from_template" "redpanda_broker" {
   count = var.broker_count
-  name  = "rp-broker-${count.index}"
+  name  = "${var.prefix}-rp-broker-${count.index}"
   zone = var.zone
   source_instance_template = google_compute_instance_template.redpanda_broker.name
 
@@ -70,13 +70,13 @@ resource "google_compute_instance_from_template" "redpanda_broker" {
 
 resource "google_compute_address" "static" {
   count      = var.broker_count
-  name       = "redpanda-static-ip-${count.index + 1}"
+  name       = "${var.prefix}-redpanda-static-ip-${count.index + 1}"
   address_type = "INTERNAL"
   subnetwork = google_compute_subnetwork.default.name
 }
 
 resource "google_compute_instance_group" "cluster" {
-  name        = "redpanda-cluster"
+  name        = "${var.prefix}-redpanda-cluster"
   description = "Redpanda Cluster"
 
   instances = google_compute_instance_from_template.redpanda_broker[*].id

@@ -1,5 +1,9 @@
 variable "project" { }
 
+variable "prefix" {
+  default = "prod"
+}
+
 variable "region" {
   default = "europe-west1"
 }
