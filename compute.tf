@@ -37,7 +37,7 @@ resource "google_compute_instance_template" "redpanda_broker" {
     }
     subnetwork  = google_compute_subnetwork.default.name
   }
-  tags = [ "http-server", "https-server", "lb-health-check", "allow-ssh"]
+  tags = [ "http-server", "lb-health-check", "allow-ssh"]
 
   scheduling {
     preemptible = true

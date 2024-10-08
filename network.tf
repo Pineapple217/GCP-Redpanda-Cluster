@@ -15,7 +15,7 @@ resource "google_compute_firewall" "default" {
 
   allow {
     protocol = "tcp"
-    ports    = ["9092", "8082", "8081", "9644", "33145", "80"]
+    ports    = ["9092", "8082", "8081", "9644", "33145"]
   }
   source_ranges = ["10.0.0.0/24"]
 }
@@ -32,6 +32,19 @@ resource "google_compute_firewall" "allow_ssh" {
 
   source_ranges = ["35.235.240.0/20"]
   target_tags   = ["allow-ssh"]
+}
+
+resource "google_compute_firewall" "http" {
+  name    = "main-network-allow-http"
+  network = google_compute_network.default.name
+
+  direction = "INGRESS"
+  allow {
+    protocol = "tcp"
+    ports    = ["80"]
+  }
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["http-server"]
 }
 
 resource "google_compute_router" "nat_router" {
