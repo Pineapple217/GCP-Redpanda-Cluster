@@ -1,0 +1,60 @@
+#! /bin/bash
+# Function to display messages
+print_message() {
+    echo "###############"
+    echo "#"
+    echo "# $1"
+    echo "#"
+    echo "###############"
+}
+
+print_message "Installing packages"
+curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | sudo -E bash
+sudo apt-get update
+sudo apt-get install xfsprogs -y
+sudo apt-get install redpanda -y
+sudo apt-get install redpanda-console -y
+# for raid
+sudo apt update && sudo apt install mdadm --no-install-recommends
+# for yq to set redpanda-console brokers
+sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+
+
+print_message "Initializing disk"
+if sudo blkid --label RPDATA;then
+        echo 'disk pre initialized'
+else
+        echo 'initializing disk'cat
+        devices=$(find /dev/ -name '*google-local-nvme-ssd*')
+        sudo mdadm --create /dev/md0 --level=0 --raid-devices=$(echo "$devices" | wc -l) $devices
+        sudo mkfs.xfs -L RPDATA /dev/md0;
+        sudo mkdir -p /var/lib/redpanda/data
+        sudo chmod 755 /var/lib/redpanda/data
+        sudo mount /dev/md0 /var/lib/redpanda/data
+        sudo chmod a+w /var/lib/redpanda/data
+        sudo sh -c 'echo -n "LABEL=RPDATA   /var/lib/redpanda/data   xfs defaults    0   2" >> /etc/fstab'
+fi
+
+print_message "Configuring redpanda"
+sudo chown redpanda:redpanda /var/lib/redpanda/data
+sudo rpk redpanda mode production
+sudo rpk redpanda tune all
+IP=$(hostname -I | awk '{print $1}') && sudo sh -c "rpk redpanda config bootstrap --self $IP --ips ${ips}"
+sudo rpk redpanda config set redpanda.empty_seed_starts_cluster false
+IP=$(hostname -I | awk '{print $1}') && sudo sed -i "s/address: 127.0.0.1/address: $IP/" /etc/redpanda/redpanda.yaml
+echo $IP
+sudo systemctl start redpanda-tuner redpanda
+command -v rpk >/dev/null && sudo rpk generate shell-completion bash > ./etc/bash_completion.d/rpk
+
+
+print_message "Configuring redpanda console"
+# config redpanda console brokers
+sudo yq -i '.kafka.brokers = [${brokers}]' /etc/redpanda/redpanda-console-config.yaml
+sudo yq -i '.server.listenPort = 80' /etc/redpanda/redpanda-console-config.yaml
+sudo yq -i '.redpanda.adminApi.enabled = true' /etc/redpanda/redpanda-console-config.yaml
+sudo yq -i '.redpanda.adminApi.urls = ["http://${url}:9644"]' /etc/redpanda/redpanda-console-config.yaml
+
+
+# start redpanda console
+sudo systemctl start redpanda-console
+sudo systemctl status redpanda-console
