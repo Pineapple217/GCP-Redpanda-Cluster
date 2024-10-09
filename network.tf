@@ -1,17 +1,22 @@
 resource "google_compute_network" "default" {
+  count = var.vpc == null ? 1 : 0
   name = "${var.prefix}-main-network"
+}
+
+locals {
+  main_network = var.vpc == null ? google_compute_network.default[0].id : var.vpc
 }
 
 resource "google_compute_subnetwork" "default" {
   name          = "${var.prefix}-cluster-subnet"
   ip_cidr_range = "10.0.0.0/24"
   region        = var.region
-  network       = google_compute_network.default.id
+  network       = local.main_network
 }
 
 resource "google_compute_firewall" "default" {
   name    = "${var.prefix}-redpanda-firewall"
-  network = google_compute_network.default.name
+  network = local.main_network
 
   allow {
     protocol = "tcp"
@@ -22,7 +27,7 @@ resource "google_compute_firewall" "default" {
 
 resource "google_compute_firewall" "allow_ssh" {
   name    = "${var.prefix}-allow-ssh"
-  network = google_compute_network.default.name
+  network = local.main_network
 
   direction = "INGRESS"
   allow {
@@ -36,7 +41,7 @@ resource "google_compute_firewall" "allow_ssh" {
 
 resource "google_compute_firewall" "http" {
   name    = "${var.prefix}-main-network-allow-http"
-  network = google_compute_network.default.name
+  network = local.main_network
 
   direction = "INGRESS"
   allow {
@@ -50,7 +55,7 @@ resource "google_compute_firewall" "http" {
 resource "google_compute_router" "nat_router" {
   name    = "${var.prefix}-redpanda-nat-router"
   region  = var.region
-  network = google_compute_network.default.id
+  network = local.main_network
 }
 
 resource "google_compute_router_nat" "nat_config" {

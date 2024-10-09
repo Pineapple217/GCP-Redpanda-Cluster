@@ -15,3 +15,9 @@ variable "zone" {
 variable "broker_count" {
   default = 3
 }
+
+variable "vpc" {
+  default = null
+  type = string
+  nullable = true
+}

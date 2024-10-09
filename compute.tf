@@ -80,7 +80,7 @@ resource "google_compute_instance_group" "cluster" {
   description = "Redpanda Cluster"
 
   instances = google_compute_instance_from_template.redpanda_broker[*].id
-  network = google_compute_network.default.id
+  network = local.main_network
 
   named_port {
     name = "console"

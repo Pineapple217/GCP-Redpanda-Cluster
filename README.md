@@ -30,3 +30,24 @@ output "console_url_dev" {
 }
 
 ```
+
+```HCL
+module "cluster_prod" {
+  source = "github.com/Pineapple217/GCP-Redpanda-Cluster"
+  project = var.project
+  zone = var.zone
+  region = var.region
+  broker_count = 3
+  prefix = "prod"
+  vpc = data.google_compute_network.main.id
+}
+
+data "google_compute_network" "main" {
+  name = "test-net"
+  project = var.project
+}
+
+output "console_url_prod" {
+  value = module.cluster_prod.console_url
+}
+```
